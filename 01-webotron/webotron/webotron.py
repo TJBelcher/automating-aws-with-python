@@ -20,6 +20,7 @@ from bucket import BucketManager
 SESSION = None
 BUCKET_MANAGER = None
 
+
 @click.group()
 @click.option('--profile', default=None,
               help="Use a given AWS profile.")
@@ -27,11 +28,12 @@ def cli(profile):
     """Webotron deploys websites to AWS."""
     global SESSION, BUCKET_MANAGER  # declaring variables as global
 
-    session_cfg = {}
+    session_cfg = {}  # session config dictionary
     if profile:
         session_cfg['profile_name'] = profile
 
-    SESSION = boto3.Session(**session_cfg)
+    SESSION = boto3.Session(**session_cfg)  # glob used to overlay profile_name
+    # arg that has an assigned value
     BUCKET_MANAGER = BucketManager(SESSION)
 
 
@@ -65,9 +67,10 @@ def setup_bucket(bucket):
 @click.argument('bucket')
 def sync(pathname, bucket):
     """Sync contents of PATHNAME to BUCKET."""
-    print("'here we are in the sync code with this pathname and bucket:",
+    print("here we are in the sync code with this pathname and bucket:",
           pathname, bucket)
     BUCKET_MANAGER.sync(pathname, bucket)
+    print(BUCKET_MANAGER.get_bucket_url(BUCKET_MANAGER.s_three.Bucket(bucket)))
 
 
 if __name__ == '__main__':

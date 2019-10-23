@@ -1,5 +1,6 @@
 # Local files
 01-webotron/Pipfile.lock
+01-webotron/ipythonsession.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
