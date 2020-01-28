@@ -10,7 +10,7 @@ and optionally configure Route 53 and cloudfront as well.
 
 ### Features
 
-Webotron currently has the following features included again:
+Webotron currently has the following features included again, as follows:
 
 - List bucket
 - List contents of a bucket
