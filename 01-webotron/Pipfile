@@ -13,6 +13,7 @@ pyflakes = "*"
 boto3 = "*"
 click = "*"
 pycodestyle = "*"
+botocore = "*"
 
 [requires]
 python_version = "3.7"
