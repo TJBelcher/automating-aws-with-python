@@ -8,6 +8,7 @@ ipython = "*"
 pydocstyle = "*"
 pylint = "*"
 pyflakes = "*"
+pycodestyle = "*"
 
 [packages]
 boto3 = "*"
