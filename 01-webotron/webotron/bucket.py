@@ -58,6 +58,7 @@ class BucketManager:
            ]
         }
         """ % bucket.name
+        # note - the % value just above is substituted into the policy at %s
         policy = policy.strip()
 
         pol = bucket.Policy()
