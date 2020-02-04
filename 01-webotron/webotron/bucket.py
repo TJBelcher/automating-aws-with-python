@@ -7,13 +7,27 @@ import mimetypes
 
 from botocore.exceptions import ClientError
 
+import util
+
 
 class BucketManager:
     """Manage an S3 Bucket."""
 
     def __init__(self, session):
         """Create a BucketManager object."""
-        self.s3 = session.resource('s3')
+        self.session = session
+        self.s3 = self.session.resource('s3')
+
+    def get_region_name(self, bucket):
+        """Get region name for a bucket."""
+        bucket_location = self.s3.meta.client.get_bucket_location(Bucket=bucket.name)
+
+        return bucket_location["LocationConstraint"] or 'us-east-1'
+
+    def get_bucket_url(self, bucket):
+        """Get the website URL for this bucket."""
+        return "http://{}.{}".format(bucket.name,
+            util.get_endpoint(self.get_region_name(bucket)).host)
 
     def all_buckets(self):
         """Get an iterator for all buckets."""
@@ -80,7 +94,8 @@ class BucketManager:
     def upload_file(bucket, path, key):
         """Upload object to S3 bucket."""
         content_type = mimetypes.guess_type(key)[0] or 'text/plain'
-
+        # print("path being uploaded is", path)
+        # print("key being uploaded is:", key)
         return bucket.upload_file(
             path,
             key,
@@ -99,7 +114,7 @@ class BucketManager:
                 if path.is_dir():
                     handle_directory(path)
                 if path.is_file():
-                    self.upload_file(bucket, str(path),
-                                     str(path.relative_to(root)))
+                    self.upload_file(bucket, str(path.as_posix()),
+                                     str(path.relative_to(root).as_posix()))
 
         handle_directory(root)
