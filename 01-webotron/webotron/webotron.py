@@ -22,10 +22,9 @@ from bucket import BucketManager
 session = None
 bucket_manager = None
 
-@click.group()
-@click.option('--profile', default=None,
-    help="Use a given AWS profile.")
 
+@click.group()
+@click.option('--profile', default=None, help="Use a given AWS profile.")
 def cli(profile):
     """Webotron deploys websites to AWS."""
     global session, bucket_manager
@@ -34,7 +33,8 @@ def cli(profile):
     if profile:
         session_cfg['profile_name'] = profile
 
-    session = boto3.Session(profile_name=session_cfg.pop('profile_name', 'pythonAutomation'))
+    session = boto3.Session(profile_name=session_cfg.pop('profile_name',
+                                                         'pythonAutomation'))
     # session = boto3.Session(**session_cfg)
     # print(session)
     bucket_manager = BucketManager(session)
@@ -74,7 +74,8 @@ def setup_bucket(bucket):
 def sync(pathname, bucket):
     """Sync contents of PATHNAME to BUCKET."""
     bucket_manager.sync(pathname, bucket)
-#   in below statement, bucket_manager.s3.Bucket(bucket) resolves to s3.Bucket(name='automatingawstomb-boto3d')
+#   in below statement, bucket_manager.s3.Bucket(bucket) resolves to
+#   s3.Bucket(name='automatingawstomb-boto3d')
     print(bucket_manager.get_bucket_url(bucket_manager.s3.Bucket(bucket)))
 
 
