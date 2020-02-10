@@ -5,11 +5,11 @@
 from pathlib import Path
 import mimetypes
 from functools import reduce
+from hashlib import md5
 
 import boto3
 from botocore.exceptions import ClientError
 
-from hashlib import md5
 import util
 
 
@@ -28,6 +28,10 @@ class BucketManager:
         )
 
         self.manifest = {}
+
+    def get_bucket(self, bucket_name):
+        """Get complete bucket entry when given the bucket name."""
+        return self.s3.Bucket(bucket_name)
 
     def get_region_name(self, bucket):
         """Get region name for a bucket."""
@@ -106,11 +110,19 @@ class BucketManager:
 
     def load_manifest(self, bucket):
         """Load manifest for caching purposes."""
+        global bucket_chk
         paginator = self.s3.meta.client.get_paginator('list_objects_v2')
+        bucket_chk = {}
         for page in paginator.paginate(Bucket=bucket.name):
             for obj in page.get('Contents', []):
-                # pprint(obj)
+                # print(obj)
+                # print(obj['ETag'])
                 self.manifest[obj['Key']] = obj['ETag']
+                # print(self.manifest[obj['Key']])
+                # print(obj)
+                bucket_chk.update({obj['Key']: "no"})
+        # for (obj_key, obj_status) in bucket_chk.items():
+        #    print(obj_key, obj_status)
 
     @staticmethod
     def hash_data(data):
@@ -143,10 +155,8 @@ class BucketManager:
         else:
             # print("path4")
             hash = self.hash_data(reduce(lambda x, y: x + y,
-                                 (h.digest() for h in hashes))
-                                 )
+                                         (h.digest() for h in hashes)))
             return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
-
 
     def upload_file(self, bucket, path, key):
         """Upload object to S3 bucket."""
@@ -155,6 +165,7 @@ class BucketManager:
         # print("path being uploaded is", path)
         # print("key being uploaded is:", key)
         etag = self.gen_etag(path)
+        bucket_chk[key] = "yes"
 
         if self.manifest.get(key, '') == etag:
             print("Skipping upload of {}-{} as etags match".format(key, path))
@@ -162,8 +173,8 @@ class BucketManager:
             return
 
         print("Uploading {}-{} etag mismatch or 0 byte file".format(key, path))
-        print("Local Key:  ",etag)
-        print("  AWS Key:  ",self.manifest.get(key, ''))
+        # print("Local Key:  ",etag)
+        # print("  AWS Key:  ",self.manifest.get(key, ''))
         return bucket.upload_file(
             path,
             key,
@@ -189,3 +200,13 @@ class BucketManager:
                                      str(path.relative_to(root).as_posix()))
 
         handle_directory(root)
+        for (obj_key, obj_status) in bucket_chk.items():
+            # print(obj_key, obj_status)
+            if obj_status == "no":
+                # print("bucket = ", bucket)
+                # print("obj_key = ", obj_key)
+                print("Deleting ", obj_key,
+                      " from ", bucket.name, "- not on local"
+                      )
+                obj_del = self.s3.Object(bucket.name, obj_key)
+                obj_del.delete()
