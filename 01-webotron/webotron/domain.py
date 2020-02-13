@@ -43,7 +43,7 @@ class DomainManager:
     def create_s3_domain_record(self, zone, domain_name, endpoint):
         """Create S3 Domain Record when not present."""
         return self.client.change_resource_record_sets(
-            HostedZoneId=zone["Id"],
+            HostedZoneId=zone['Id'],
             ChangeBatch={
                 'Comment': 'Creatd by webotron',
                 'Changes': [{
@@ -54,6 +54,32 @@ class DomainManager:
                             'AliasTarget': {
                                 'HostedZoneId': endpoint.zone,
                                 'DNSName': endpoint.host,
+                                'EvaluateTargetHealth': False
+                            }
+                        }
+                    }
+                ]
+            }
+        )
+
+    def create_cf_domain_record(self, zone, domain_name, cf_domain):
+        """Create Cloudfront Domain Record when not present."""
+        return self.client.change_resource_record_sets(
+            HostedZoneId=zone['Id'],
+            ChangeBatch={
+                'Comment': 'Creatd by webotron',
+                'Changes': [{
+                        'Action': 'UPSERT',
+                        'ResourceRecordSet': {
+                            'Name': domain_name,
+                            'Type': 'A',
+                            'AliasTarget': {
+                                # Note that for CloudFront, the hosted zone
+                                # id will always be the value below - Alias
+                                # resource record sets for Cloudfront can't be
+                                # created in a private zone.
+                                'HostedZoneId': 'Z2FDTNDATAQYW2',
+                                'DNSName': cf_domain,
                                 'EvaluateTargetHealth': False
                             }
                         }
