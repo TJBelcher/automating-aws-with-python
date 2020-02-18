@@ -9,13 +9,12 @@ key = ec2.create_key_pair(KeyName=key_name)
 key.key_material
 with open(key_path, 'w') as key_file:
     key_file.write(key.key_material)
-    
-    
+
 get_ipython().run_line_magic('ls', '-l python_automation_key.pem')
 import os, stat
 os.chmod(key_path, stat.S_IRUSR | stat.S_IWUSR)
 get_ipython().run_line_magic('ls', '-l python_automation_key.pem')
-dir 
+dir
 get_ipython().run_line_magic('ls', '')
 get_ipython().run_line_magic('ls', '-l python_automation_key.pem')
 get_ipython().run_line_magic('ls', '-la python_automation_key.pem')
