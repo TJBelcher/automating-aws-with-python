@@ -4,6 +4,7 @@
 01-webotron-old
 02-notifon/python_automation_key.pem
 02-notifon/config.dev.json
+02-notifon/notifier/node_modules/
 python_automation_key.pem
 
 # Byte-compiled / optimized / DLL files

@@ -28,4 +28,5 @@ using Cloudwatch Events
 ### features
 
 Notifon currently has the following features:
-- TBD
+- Send notifications to Slack when Cloudwatch events detects changes,
+  such as a successful ec2 launch into a scaling group.
