@@ -5,9 +5,40 @@ provider:
   profile: ${file(../config.${self:provider.stage}.json):videolyzer.profile}
   runtime: python3.6
   region: us-east-1
+
 #  stage: dev
 
- 
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "rekognition:*"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+# Resource will be equal to:  arn:aws:s3:::tomvideolyzervideos57/*
+      Resource:
+        - Fn::Join:
+# delimiter
+          - ''
+# value list
+          - - ${self:custom.videosBucketArn}
+            - '/*'
+custom:
+# building a bucket arn like:  arn:aws:s3:::tomvideolyzervideos57
+  videosBucketArn:
+      Fn::Join:
+# delimiter
+        - ':'
+# value list
+        - - arn
+          - aws
+          - s3
+          - ''
+          - ''
+          - ${file(../config.${self:provider.stage}.json):videolyzer.videos_bucket}
+
+
 functions:
   startProcessingVideo:
     handler: handler.start_processing_video
