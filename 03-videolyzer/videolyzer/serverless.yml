@@ -24,7 +24,34 @@ provider:
 # value list
           - - ${self:custom.videosBucketArn}
             - '/*'
+    - Effect: "Allow"
+      Action:
+        - iam:GetRole
+        - iam:PassRole
+      Resource:
+        Fn::GetAtt:
+          - RekognitionSNSPublishRole
+          - Arn
+
+  environment:
+    REKOGNITION_SNS_TOPIC_ARN: ${self:custom.rekognitionSNSTopicArn}
+    REKOGNITION_ROLE:
+      Fn::GetAtt:
+        - RekognitionSNSPublishRole
+        - Arn
+
 custom:
+  rekognitionSNSTopicArn:
+    Fn::Join:
+# delimiter
+        - ':'
+# value list
+        - - arn
+          - aws
+          - sns
+          - Ref: AWS::Region
+          - Ref: AWS::AccountId
+          - handleLabelDetectionTopic
 # building a bucket arn like:  arn:aws:s3:::tomvideolyzervideos57
   videosBucketArn:
       Fn::Join:
@@ -48,3 +75,38 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - suffix: .mp4
+
+  handleLabelDetection:
+    handler: handler.handle_label_detection
+    events:
+      - sns: handleLabelDetectionTopic
+
+resources:
+# this statement says rekognition service will be allowed assume the role
+# we are defining within the Policies section below.  the sts Statement
+# returns a set of temporary security credentials that you can use to access
+# AWS resources.
+  Resources:
+    RekognitionSNSPublishRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - rekognition.amazonaws.com
+              Action:
+                - sts:AssumeRole
+# this statement defines the policies that are conferred thru the assume
+# role statement.
+        Policies:
+          - PolicyName: RecognitionSNSPublishPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - sns:Publish
+                  Resource: ${self:custom.rekognitionSNSTopicArn}
