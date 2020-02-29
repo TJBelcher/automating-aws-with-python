@@ -24,6 +24,8 @@ provider:
 # value list
           - - ${self:custom.videosBucketArn}
             - '/*'
+# This statement allows lambda to get and pass the role populated in the
+# ARN named RekognitionSNSPublishRole and defined later in this yml file.
     - Effect: "Allow"
       Action:
         - iam:GetRole
@@ -32,8 +34,16 @@ provider:
         Fn::GetAtt:
           - RekognitionSNSPublishRole
           - Arn
-
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:PutItem"
+      Resource:
+        Fn::GetAtt:
+          - VideosTable
+          - Arn
+          
   environment:
+    DYNAMODB_TABLE_NAME: ${self:custom.videosTableName}
     REKOGNITION_SNS_TOPIC_ARN: ${self:custom.rekognitionSNSTopicArn}
     REKOGNITION_ROLE:
       Fn::GetAtt:
@@ -41,6 +51,7 @@ provider:
         - Arn
 
 custom:
+  videosTableName: ${file(../config.${self:provider.stage}.json):videolyzer.videos_table}
   rekognitionSNSTopicArn:
     Fn::Join:
 # delimiter
@@ -87,6 +98,21 @@ resources:
 # returns a set of temporary security credentials that you can use to access
 # AWS resources.
   Resources:
+    VideosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: videoName
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: videoName
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.videosTableName}
     RekognitionSNSPublishRole:
       Type: AWS::IAM::Role
       Properties:
