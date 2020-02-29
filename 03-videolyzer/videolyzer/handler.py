@@ -18,7 +18,7 @@ def start_label_detection(bucket, key):
             'RoleArn': os.environ['REKOGNITION_ROLE'],
             })
 
-    print(response)
+#    print(response)
 
     return
 
