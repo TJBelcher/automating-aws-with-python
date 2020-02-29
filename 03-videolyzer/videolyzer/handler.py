@@ -44,34 +44,40 @@ def get_video_labels(job_id):
     return response
 
 def make_item(data):
+# for dictionaries, we'll return a collection comprehension of the
+# dictionary with a recursive loop.  For lists we recursively check each items
+# for individual floats we convert and non-floats are returned as-is.
+# Remember, stacked lists are part of a list themselves, so they'll be
+# dealt with thru the recursion.
     if isinstance(data, dict):
         return { k: make_item(v) for k, v in data.items() }
-
     if isinstance(data, list):
         return [ make_item(v) for v in data ]
-
     if isinstance(data, float):
         return str(data)
-
     return data
 
 def put_labels_in_db(data, video_name, video_bucket):
-    pass
-#    del data['ResponseMetadata']
-#    del data['JobStatus']
+# deleting metadata from the api call and the JobStatus info
+    del data['ResponseMetadata']
+    del data['JobStatus']
+# these were passed into our function - adding them to the record set - keeping
+# the data together.
+    data['videoName'] = video_name
+    data['videoBucket'] = video_bucket
+# The table name in config.dev.json is fed into serverless.yml which then
+# feeds into here as an os variable - we import os above.
+    dynamodb = boto3.resource('dynamodb')
+    table_name = os.environ['DYNAMODB_TABLE_NAME']
+    videos_table = dynamodb.Table(table_name)
+# converting to string to avoid a floating point number conflict between
+# python and dynamoDB that's not handled by boto3. Could also have used
+# an integer value but electing to do this even if it's a little slower.
+    data = make_item(data)
 
-#    data['videoName'] = video_name
-#    data['videoBucket'] = video_bucket
+    videos_table.put_item(Item=data)
 
-#    dynamodb = boto3.resource('dynamodb')
-#    table_name = os.environ['DYNAMODB_TABLE_NAME']
-#    videos_table = dynamodb.Table(table_name)
-
-#    data = make_item(data)
-
-#    videos_table.put_item(Item=data)
-
-#    return
+    return
 
 # Lambda events
 
@@ -98,7 +104,7 @@ def handle_label_detection(event, context):
         s3_bucket = message['Video']['S3Bucket']
 
         response = get_video_labels(job_id)
-        print(response)
+#        print(response)
         put_labels_in_db(response, s3_object, s3_bucket)
 
     return
